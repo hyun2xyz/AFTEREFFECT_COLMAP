@@ -41,6 +41,9 @@ py -3.13 -m venv .venv
 전달하거나 `COLMAP_BINARY`/FFmpeg PATH를 그 프로세스에서 설정해야 합니다.
 실행기는 `colmap.exe` 옆의 DLL 경로와 상위 `plugins`를 연결합니다.
 `doctor`가 실패하면 전체 ZIP 구조·버전·로그를 먼저 확인합니다.
+배포본 실행 시 Microsoft C/C++ runtime DLL 오류가 나면
+[Microsoft 공식 Visual C++ Redistributable 안내](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
+에서 x64용 runtime을 확인합니다. 출처를 모르는 DLL 파일을 따로 복사하지 않습니다.
 
 COLMAP은 별도 모델 가중치가 필요 없습니다. [선택 Laya](laya.md)는 같은
 다국어 가중치를 CPU로 사용하므로 Windows에 MLX를 설치하지 않습니다.

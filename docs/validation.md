@@ -31,11 +31,12 @@ python -B scripts/jobs.py start --job /absolute/work/job-smoke --estimate-minute
 | 항목 | 상태 |
 | --- | --- |
 | Mac CPU COLMAP 전체 경로 | 위 합성 입력에서 실제 통과 |
-| macOS/Windows Python 회귀 | GitHub Actions matrix를 추가; 아래 CI 결과에서 구분 |
+| macOS/Windows Python 회귀 | Python 3.12/3.13 네 조합에서 21개씩 통과 ([코드 커밋 877d334 CI](https://github.com/hyun2xyz/AFTEREFFECT_COLMAP/actions/runs/40113353777)) |
 | Windows COLMAP 바이너리 | 공식 x64 nocuda 설치 경로 안내; 이 Mac에서 실행한 것으로 보고하지 않음 |
 | 실제 After Effects JSX | Mac AE 26.3x87에서 Run Script File로 실제 가져오기 완료(MCP 미사용) |
 | 실제 AE 카메라 투영 | 3개 프레임 × 80개 점 = 240개 toComp 비교, max 0.000147px / p95 0.000121px 통과 |
 | 벽 기준 + 3D 파일 가져오기 | 생성한 cube OBJ로 anchor→JSX 실행; USER_MODEL과 Advanced 3D 전환 확인 |
+| 평면 정렬 후 Advanced 3D 투영 | 같은 240개 비교, max 0.000596px / p95 0.000448px 통과 |
 | 실제 학생 영상 합성/3D 모델 축·피벗·접지 | 학생 입력으로 별도 검수 필요 |
 | 일회성 예약으로 종료된 채팅 재개→자기 삭제 | 스킬/도구별 계약 작성; 이번 실행에서 실제 예약을 생성하지 않음 |
 | Laya 모델 | 고정 revision/파일 목록/Apache-2.0 모델 카드 확인, 가중치 미다운로드·실제 추론 미실행 |
