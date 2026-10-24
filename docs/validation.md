@@ -32,7 +32,7 @@ python -B scripts/jobs.py start --job /absolute/work/job-smoke --estimate-minute
 | --- | --- |
 | Mac CPU COLMAP 전체 경로 | 위 합성 입력에서 실제 통과 |
 | macOS/Windows Python 회귀 | Python 3.12/3.13 네 조합에서 21개씩 통과 ([코드 커밋 877d334 CI](https://github.com/hyun2xyz/AFTEREFFECT_COLMAP/actions/runs/40113353777)) |
-| Windows COLMAP 바이너리 | 공식 x64 nocuda 설치 경로 안내; 이 Mac에서 실행한 것으로 보고하지 않음 |
+| Windows COLMAP 바이너리 | GitHub Windows runner에서 공식 4.2.1 x64 nocuda ZIP 해시 검증 후 전체 smoke 통과 ([CI](https://github.com/hyun2xyz/AFTEREFFECT_COLMAP/actions/runs/40113596426)) |
 | 실제 After Effects JSX | Mac AE 26.3x87에서 Run Script File로 실제 가져오기 완료(MCP 미사용) |
 | 실제 AE 카메라 투영 | 3개 프레임 × 80개 점 = 240개 toComp 비교, max 0.000147px / p95 0.000121px 통과 |
 | 벽 기준 + 3D 파일 가져오기 | 생성한 cube OBJ로 anchor→JSX 실행; USER_MODEL과 Advanced 3D 전환 확인 |
@@ -44,6 +44,13 @@ python -B scripts/jobs.py start --job /absolute/work/job-smoke --estimate-minute
 백그라운드 작업은 문서 작성 중 실제 독립 프로세스로 진행했습니다.
 스케줄러가 아닌 `jobs.py wakeup`을 실제 예약 생성으로 표현하지 않습니다.
 COLMAP 계산 동안 독립적인 문서/코드 작업이 남아 있어 이번에는 그 일을 계속했습니다.
+
+Windows의 실제 CPU smoke도 12/12프레임 등록, 점 9,691개,
+내부 오차 중앙값 약 0.09229px, 약 30.8초였습니다. 같은 코드 커밋
+`43d4a5e75a8c47535857c907097721ea864e9097`의 macOS/Windows × Python
+3.12/3.13 회귀 네 조합과 Windows COLMAP job 모두 통과했습니다.
+이후 검증 기록만 갱신한 커밋은 계산 코드를 바꾸지 않습니다.
+Windows의 실제 Adobe 앱 실행은 이 CI에 포함되지 않습니다.
 
 ## 선택: 애펙 안에서 좌표 전달 검사
 
