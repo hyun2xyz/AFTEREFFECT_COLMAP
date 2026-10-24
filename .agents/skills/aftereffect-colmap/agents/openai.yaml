@@ -1,0 +1,4 @@
+interface:
+  display_name: "Aftereffect COLMAP"
+  short_description: "수업용 COLMAP 카메라와 RGB 기준점을 Python으로 애펙에 가져오기"
+  default_prompt: "Use $aftereffect-colmap to check my computer and guide one lesson at a time from my clip to a COLMAP camera in After Effects."
