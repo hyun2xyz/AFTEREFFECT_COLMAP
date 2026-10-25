@@ -32,6 +32,8 @@ commit `a1e3c50ad4dddff8215ddb7e9eded078d639f4a5`의 MIT 관례를 참고합니�
 | COLMAP | https://github.com/colmap/colmap | BSD-3-Clause 및 해당 릴리스 dependency notices; 바이너리 미포함 |
 | FFmpeg | https://ffmpeg.org/legal.html | 빌드 옵션에 따라 LGPL/GPL 등 확인; 바이너리 미포함 |
 | Pillow | https://pillow.readthedocs.io/en/stable/about.html#license | 별도 오픈소스 의존성; pip 설치 |
+| NumPy | https://github.com/numpy/numpy/blob/main/LICENSE.txt | 연속 추적용 선택 의존성; pip 설치 |
+| OpenCV | https://github.com/opencv/opencv/blob/4.x/LICENSE | 연속 추적용 선택 의존성; headless CPU 패키지 pip 설치 |
 | Laya 코드 | https://github.com/NandhaKishorM/laya | MIT; 선택 설치 |
 | Laya 가중치 | https://huggingface.co/convaiinnovations/laya | 해당 모델 카드 Apache-2.0; 다운로드 시 revision/notice 확인 |
 | After Effects | https://www.adobe.com/products/aftereffects.html | 상용, 학생의 별도 라이선스 필요 |

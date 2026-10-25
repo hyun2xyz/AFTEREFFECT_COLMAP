@@ -32,10 +32,17 @@ Use [workflow](../../../docs/workflow.md) for command details.
 - `solve`: CPU SIFT, sequential matching, mapping, image undistortion and TXT
   export. This runs in the background. Pick one connected reconstruction and
   report its coverage; never merge disconnected models or invent camera keys.
+- If SIFT loses a short static shot or self-calibration diverges, read the
+  [measured-track fallback](../../../docs/temporal.md). It needs a reviewed mask,
+  explicit lens assumption and optional OpenCV, not model weights. Require its
+  unused-track gate before export; registration count alone is insufficient.
 - `export`: require all prepared frames to be registered. Preserve RGB on a
-  small set of native AE guide shapes. Center the actual undistorted images
+  visible native3D point cloud grouped in one collapsed precomp. Size the display
+  markers in first-frame pixels; do not change their3D centers. Center the actual undistorted images
   together with their camera intrinsics. Produce `scene.json`, `review.jpg`,
-  `report.json` and a visible, reviewable `import_scene.jsx`.
+  `report.json`, the complete original-coordinate `points.ply` and `import_scene.jsx`.
+  Keep the main comp to camera/cloud/source/black background. Source starts off
+  so the RGB cloud is visible; turn its eye on to compare against footage.
 - Review the first/middle/last overlays and actual images. Explain plausible
   floor/wall/object depth using visible evidence, not just point coordinates.
   Sparse points do not identify semantics, dense surfaces or metric scale.
@@ -68,6 +75,8 @@ Read [background](../../../docs/background.md) before a long operation.
   after which report and leave the job's actual timeout policy intact.
 - If failed, stale, missing, invalid or timed out, keep logs/partials, remove the
   wakeup and explain the observed issue. Do not restart on your own.
+  An already-authorized diagnosis/retry may continue with one evidence-based
+  changed experiment; do not request the same authorization after each failure.
 - If succeeded, verify expected files/coverage and continue the next authorized
   lesson. Remove the reservation on completion, failure or user cancellation.
 - If no scheduling tool is available, say automatic wakeup is unavailable and

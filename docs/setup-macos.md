@@ -44,6 +44,8 @@ CUDA가 없는 빌드의 기본 고밀도 stereo 복원은 이 입문 과정에 
 
 Laya가 필요한 다음 단계에서만 [Laya 안내](laya.md)를 읽습니다.
 일반 모델은 두 OS에서 같고, Mac 전용 MLX 가중치가 필수인 구조가 아닙니다.
+SIFT가 끊기는 짧은 샷은 [선택형 연속 추적](temporal.md)을 검토합니다.
+그때만 프로젝트 venv에 `requirements-tracking.txt`를 설치합니다. 가중치는 없습니다.
 
 ## 애펙에서 마지막 한 번
 

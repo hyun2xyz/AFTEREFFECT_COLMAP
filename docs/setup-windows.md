@@ -47,6 +47,9 @@ py -3.13 -m venv .venv
 
 COLMAP은 별도 모델 가중치가 필요 없습니다. [선택 Laya](laya.md)는 같은
 다국어 가중치를 CPU로 사용하므로 Windows에 MLX를 설치하지 않습니다.
+SIFT가 끊기는 짧은 샷은 [선택형 연속 추적](temporal.md)을 검토하고,
+그때만 `.\.venv\Scripts\python.exe -m pip install -r requirements-tracking.txt`로
+NumPy/OpenCV를 프로젝트 venv에 추가합니다. 가중치는 필요하지 않습니다.
 
 ## 애펙
 

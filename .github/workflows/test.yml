@@ -13,6 +13,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements-tracking.txt
       - run: python -B -m unittest discover -s tests -v
   windows-colmap:
     runs-on: windows-latest
@@ -23,6 +24,7 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements-tracking.txt
       - name: Prepare official CPU COLMAP and FFmpeg
         shell: pwsh
         run: |
@@ -39,3 +41,4 @@ jobs:
       - run: python -B scripts/colmap_ae.py doctor
       # CI is a deterministic runner, not an LLM waiting/polling for this process.
       - run: python -B tests/smoke_colmap.py --out work/windows-smoke
+      - run: python -B tests/smoke_temporal.py --prepared work/windows-smoke/prepared --out work/windows-temporal-smoke

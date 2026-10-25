@@ -182,6 +182,22 @@ def world_position(xyz, transform, k):
     return [k["cx"]+v[0]*transform["scale"], k["cy"]+v[1]*transform["scale"], v[2]*transform["scale"]]
 
 
+def cloud_glyphs(scene):
+    """Preserve centers/RGB; size display glyphs to visible first-frame pixels."""
+    pixels = scene.get("point_size_px", 6)
+    if not math.isfinite(pixels) or not 1 <= pixels <= 30:
+        raise ValueError("Point display diameter must be 1..30 pixels")
+    first, k, tr = scene["frames"][0], scene["intrinsics"], scene["world"]
+    points = scene.get("cloud_points", scene["points"])
+    depths = [abs(mv(first["rotation"], p["xyz"])[2]+first["translation"][2]) for p in points]
+    positive = sorted(z for z in depths if z > 1e-8)
+    reference = positive[len(positive)//2] if positive else 1
+    return [{"id":p["id"], "position":world_position(p["xyz"],tr,k),
+             "color":[v/255 for v in p["rgb"]],
+             "diameter":pixels*max(z,reference*.01)*tr["scale"]/k["fx"]}
+            for p,z in zip(points,depths)]
+
+
 def ae_poses(scene):
     k, tr = scene["intrinsics"], scene["world"]
     if not math.isfinite(tr["scale"]) or tr["scale"] <= 0:
