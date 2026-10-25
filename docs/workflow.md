@@ -57,8 +57,10 @@ python -B scripts/colmap_ae.py export --solution work/shot01/solve/solution.json
 하나라도 있으면 JSX 내보내기를 막습니다. 상태를 완화하거나 보간으로 채우지
 말고 샷·특징·매칭에서 원인을 찾는 다음 수업으로 갑니다.
 
-내보내기는 왜곡 없는 PINHOLE을 사용합니다. 주점이 영상 중앙과 다르면
-**이미지의 padding/평행 이동과 카메라 주점을 함께** 바꿉니다. 소수 픽셀 이동은
+내보내기는 왜곡 없는 PINHOLE 투영을 사용합니다.
+COLMAP이 왜곡 계수 **정확히 0**인 `SIMPLE_RADIAL` 형식을 유지한 경우도
+투영이 PINHOLE과 같으므로 허용합니다. 0이 아닌 왜곡은 계속 거부합니다.
+주점이 영상 중앙과 다르면 **이미지의 padding/평행 이동과 카메라 주점을 함께** 바꿉니다. 소수 픽셀 이동은
 Pillow bicubic으로 작업용 복사본에만 적용하고 원본 intrinsics/이동량을 기록합니다.
 Anamorphic/non-square fx/fy와 거의 수직인 AE POI 카메라는 이 starter에서 거부합니다.
 

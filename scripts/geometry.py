@@ -107,6 +107,10 @@ def pinhole(camera):
         fx, cx, cy = p; fy = fx
     elif camera["model"] == "PINHOLE" and len(p) == 4:
         fx, fy, cx, cy = p
+    elif camera["model"] == "SIMPLE_RADIAL" and len(p) == 4 and p[3] == 0:
+        # COLMAP can retain this model after undistortion when k is exactly zero.
+        # Its image projection is then exactly pinhole; no pixel remapping needed.
+        fx, cx, cy, _ = p; fy = fx
     else:
         raise ValueError("Export requires COLMAP-undistorted PINHOLE, not a distorted camera")
     if not all(math.isfinite(v) for v in [fx, fy, cx, cy]) or min(fx, fy) <= 0:

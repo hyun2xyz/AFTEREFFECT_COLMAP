@@ -68,6 +68,19 @@ class GeometryTests(unittest.TestCase):
         s=fixture();s["frames"][0]["rotation"]=quaternion([math.sqrt(.5),math.sqrt(.5),0,0])
         with self.assertRaises(ValueError):ae_poses(s)
 
+    def test_exact_zero_radial_is_pinhole_without_approximating_distortion(self):
+        radial={"model":"SIMPLE_RADIAL","width":1600,"height":900,"params":[1920,800,450,0]}
+        pin={"model":"PINHOLE","width":1600,"height":900,"params":[1920,1920,800,450]}
+        self.assertEqual(centered_plate(radial),centered_plate(pin))
+        k=centered_plate(radial)
+        for x,y,z in ((1,2,5),(-3,.2,9),(0,0,1)):
+            u,v=project(fixture()["frames"][0],[x,y,z],k)
+            self.assertAlmostEqual(u,1920*x/z+800)
+            self.assertAlmostEqual(v,1920*y/z+450)
+        for distortion in (1e-12,-1e-12,.1,float("nan")):
+            radial["params"][3]=distortion
+            with self.assertRaises(ValueError):pinhole(radial)
+
     def test_floor_and_wall_are_coplanar_after_basis_change(self):
         pts=[{"id":1,"xyz":[2,1,3]},{"id":2,"xyz":[4,1,3]},{"id":3,"xyz":[2,1,6]}]
         k=fixture()["intrinsics"]
