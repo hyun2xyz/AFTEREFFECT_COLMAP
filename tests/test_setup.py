@@ -69,12 +69,12 @@ class SetupTests(unittest.TestCase):
             self.assertNotIn("PATH", os.environ)
         self.assertTrue(result["configured"])
         self.assertFalse((self.root/".git").exists())
-        self.assertEqual(json.loads((self.root/"tools.local.json").read_text()), tools)
+        self.assertEqual(json.loads((self.root/"tools.local.json").read_text(encoding="utf-8")), tools)
         self.assertFalse(list(self.root.glob(".tools-local-*")))
 
     def test_tool_precedence_is_argument_environment_config_path(self):
         files = {source: str(self.tool(source)) for source in ("argument", "environment", "config", "path")}
-        (self.root/"tools.local.json").write_text(json.dumps({"colmap": files["config"]}))
+        (self.root/"tools.local.json").write_text(json.dumps({"colmap": files["config"]}), encoding="utf-8")
         with patch.object(setup, "probe_tool", return_value={"version": "fixture"}), patch.object(setup.shutil, "which", return_value=files["path"]), patch.dict(os.environ, {"COLMAP_BINARY": files["environment"]}, clear=True):
             self.assertEqual(setup.find_tools(self.root, {"colmap": files["argument"]})["colmap"]["path"], files["argument"])
             self.assertEqual(setup.find_tools(self.root)["colmap"]["path"], files["environment"])
@@ -87,12 +87,12 @@ class SetupTests(unittest.TestCase):
         tools = self.tools()
         config = self.root/"tools.local.json"
         original = json.dumps(tools)
-        config.write_text(original)
+        config.write_text(original, encoding="utf-8")
         with patch.object(setup, "probe_tool", side_effect=lambda name, path: {"version": "ok"} if path.is_file() else {"error": "missing"}):
             result = setup.configure(self.root, {"colmap": "missing.exe"})
         self.assertFalse(result["configured"])
         self.assertEqual(result["tools"]["colmap"]["source"], "argument")
-        self.assertEqual(config.read_text(), original)
+        self.assertEqual(config.read_text(encoding="utf-8"), original)
 
     def test_rejects_batch_wrappers_and_reports_version_failure(self):
         wrapper = self.root/"COLMAP.bat"

@@ -34,6 +34,10 @@ FFmpeg 준비 → setup helper의 로컬 venv/Pillow 설치 → 개인 경로 co
 생성 → 기본 SIFT → 선택 tracking 설치/연속 추적 → 고정 카메라 점 추가/전체 GLB를
 실행합니다. 해당 커밋의 실제 통과 여부를 확인하며, Windows Adobe 앱은 실행하지 않습니다.
 
+[Windows 실제 계산 기록](https://github.com/hyun2xyz/AFTEREFFECT_COLMAP/actions/runs/40288167326/job/121456677310)에서
+위 설치·설정·계산 단계를 통과했습니다. 새 SIFT 점 추가는12/12프레임·9,724점,
+카메라 변화0, native PLY 동일 복사와 전체 GLB export를 확인했습니다.
+
 ## 실제 After Effects
 
 Python이 생성한 공용 JSX를 Mac AE26.3x87의 **File → Scripts → Run Script File**로
