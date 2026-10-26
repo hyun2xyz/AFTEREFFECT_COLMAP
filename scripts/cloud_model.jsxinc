@@ -1,0 +1,17 @@
+/* Inlined in generated JSX: native GLB units are measured, not assumed per OS. */
+function addMeasuredCloud(comp,file,folder,cfg,origin){
+  var asset=app.project.importFile(new ImportOptions(file));asset.parentFolder=folder;
+  var layer=comp.layers.add(asset);layer.name="POINT_CLOUD_RGB";layer.threeDLayer=true;
+  var r=layer.sourceRectAtTime(0,false),wx=cfg.max[0]-cfg.min[0],hy=cfg.max[1]-cfg.min[1];
+  var ux=r.width/wx,uy=r.height/hy;
+  if(!isFinite(ux)||ux<=0||!isFinite(uy)||uy<=0||Math.abs(ux-uy)>Math.max(ux,uy)*1e-4)
+    throw new Error("Unsupported native model units; run the RGB check and inspect this AE version");
+  var hostUnits=(ux+uy)/2,scale=100*cfg.units/hostUnits;
+  var tr=layer.property("ADBE Transform Group");
+  tr.property("ADBE Anchor Point").setValue([0,0,0]);tr.property("ADBE Position").setValue(origin);
+  tr.property("ADBE Scale").setValue([scale,scale,scale]);tr.property("ADBE Orientation").setValue([0,0,0]);
+  var opts=layer.property("ADBE Compositing Options Group");
+  opts.property("ADBE Accepts Lights").setValue(0);opts.property("ADBE Accepts Shadows").setValue(0);opts.property("ADBE Casts Shadows").setValue(0);
+  layer.comment="Measured COLMAP centers/RGB; "+cfg.points+" display glyphs; native units="+hostUnits+"; no connecting surfaces.";
+  return layer;
+}

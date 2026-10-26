@@ -41,3 +41,7 @@ commit `a1e3c50ad4dddff8215ddb7e9eded078d639f4a5`의 MIT 관례를 참고합니�
 코드와 모델 가중치의 라이선스는 서로 다를 수 있습니다. 공개/상용 사용 전에
 사용 중인 실제 버전과 자산의 조건을 확인합니다. 합성 smoke의 텍스처는 난수로
 생성하며 외부 사진이나 영상은 내려받지 않습니다.
+
+전체 점 표시 파일은 [Khronos glTF2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html)과
+[KHR_materials_unlit](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_unlit)
+형식 규약을 따릅니다. 외부 GLB exporter 코드나 3D 자산을 복사하지 않습니다.

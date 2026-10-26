@@ -29,7 +29,7 @@ class CloudExportTests(unittest.TestCase):
         p=self.root/"text/points3D.txt"
         with p.open("a") as stream:
             stream.write("4 .3 .2 6 12 34 56 .1 1 0 2 0 3 0\n5 .4 .1 6 67 89 10 .1 1 0 2 0 3 0\n")
-        out=self.root/"cloud";r=self.cli("export","--solution",self.root/"solution.json","--out",out,"--cloud-limit","3")
+        out=self.root/"cloud";r=self.cli("export","--solution",self.root/"solution.json","--out",out,"--cloud-renderer","shapes","--cloud-limit","3")
         self.assertEqual(r.returncode,0,r.stderr)
         s=json.loads((out/"scene.json").read_text());self.assertEqual(len(s["cloud_points"]),3)
         ply=(out/"points.ply").read_text();self.assertIn("element vertex 5\n",ply)

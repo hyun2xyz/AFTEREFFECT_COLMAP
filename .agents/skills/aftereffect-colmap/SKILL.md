@@ -1,6 +1,6 @@
 ---
 name: aftereffect-colmap
-description: Teach a minimal macOS/Windows COLMAP-to-After-Effects workflow with Python-generated JSX, sparse camera/RGB guide points, floor or wall alignment, and detached jobs with one-shot agent wakeups. Use in this repository for a student's shot; no AE MCP or full automatic VFX pipeline.
+description: Set up a clean macOS/Windows computer and teach COLMAP camera/full RGB cloud import into After Effects with Python-generated JSX, fixed-camera point enrichment, and detached jobs with one-shot wakeups. Use in this repository for a student's shot; no AE MCP.
 ---
 
 # Aftereffect COLMAP
@@ -11,10 +11,13 @@ copying this SKILL.md alone does not install its tools.
 
 ## First interaction
 
-1. Inspect the actual OS, Python, `colmap`, FFmpeg and AE availability. Run
-   `python -B scripts/colmap_ae.py doctor` with the project venv interpreter.
-2. If setup is missing, read only the matching reference:
+1. Inspect the actual OS/shell and repository root. If Python or tools are
+   missing, start with [START-HERE](../../../START-HERE.md); do not run a missing
+   interpreter or assume this Mac's paths exist on the student's computer.
+2. Read only the matching setup when needed:
    [macOS](../../../docs/setup-macos.md) or [Windows](../../../docs/setup-windows.md).
+   The stdlib setup helper configures local paths/venv without Git or Pillow.
+   Then run `python -B scripts/colmap_ae.py doctor` using the project venv.
    COLMAP/SIFT needs no learned weights. AE is a separately licensed application.
 3. Locate the student's clip and a new working directory. Keep their original
    intact. A first clip should be a short, static textured environment, normal
@@ -36,13 +39,22 @@ Use [workflow](../../../docs/workflow.md) for command details.
   [measured-track fallback](../../../docs/temporal.md). It needs a reviewed mask,
   explicit lens assumption and optional OpenCV, not model weights. Require its
   unused-track gate before export; registration count alone is insufficient.
-- `export`: require all prepared frames to be registered. Preserve RGB on a
-  visible native3D point cloud grouped in one collapsed precomp. Size the display
-  markers in first-frame pixels; do not change their3D centers. Center the actual undistorted images
+- `export`: require all prepared frames to be registered. Default to the complete
+  RGB cloud in one native GLB model layer (AE24.1+); no display sampling. Size
+  markers in first-frame pixels without changing centers. Center the actual undistorted images
   together with their camera intrinsics. Produce `scene.json`, `review.jpg`,
-  `report.json`, the complete original-coordinate `points.ply` and `import_scene.jsx`.
+  `report.json`, original-coordinate `points.ply`, `pointcloud.glb`, `check_rgb.jsx`
+  and `import_scene.jsx`. Keep the generated assets together.
   Keep the main comp to camera/cloud/source/black background. Source starts off
   so the RGB cloud is visible; turn its eye on to compare against footage.
+- On each new AE host, run `check_rgb.jsx` and compare all five reference/model
+  color pairs before claiming native color fidelity. The importer measures model
+  units and disables cloud lighting. Python/Windows CI is not native Windows AE
+  proof. Read [full point clouds](../../../docs/point-cloud.md) for this stage.
+- If more real points are requested, `enrich_cloud.py` fixes the accepted cameras
+  and runs native COLMAP triangulation. Default fresh SIFT on accepted images;
+  reuse only a copied DB with pixel-identical declared source images. Preserve
+  camera/lens and existing heldout gates. Do not interpolate or invent points.
 - Review the first/middle/last overlays and actual images. Explain plausible
   floor/wall/object depth using visible evidence, not just point coordinates.
   Sparse points do not identify semantics, dense surfaces or metric scale.
@@ -52,10 +64,15 @@ Use [workflow](../../../docs/workflow.md) for command details.
 - Run generated JSX via AE's File > Scripts > Run Script File. Python creates
   the JSX because AE does not run Python natively. No MCP, persistent panel,
   network bridge, project overwrite, render or automatic save is needed.
+  If this Codex host has no app-control tool, hand the student the exact generated
+  JSX path and this menu action; leave native verification pending until observed.
 
 ## Long calculations and cheap context
 
 Read [background](../../../docs/background.md) before a long operation.
+
+Use Python for large coordinates and measurements. Read the short `report.json`;
+use `review_points.json` only for IDs. Do not paste full scene arrays into context.
 
 - Launch once with `scripts/jobs.py start` into a new absolute job directory.
   It detaches a supervisor; don't use a foreground shell timeout as a job runner.

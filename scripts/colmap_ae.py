@@ -37,7 +37,17 @@ def fresh(path):
 
 
 def binary(name, configured=None):
-    candidate = configured or os.environ.get(name.upper()+"_BINARY") or shutil.which(name)
+    candidate = configured or os.environ.get(name.upper()+"_BINARY")
+    if not candidate and (ROOT/"tools.local.json").is_file():
+        local = load(ROOT/"tools.local.json")
+        if not isinstance(local, dict):
+            raise ValueError("tools.local.json must map tool names to executable paths")
+        candidate = local.get(name)
+        if candidate:
+            if not isinstance(candidate, str):
+                raise ValueError(f"tools.local.json {name} must be an executable path")
+            candidate = str(ROOT/Path(candidate).expanduser())
+    candidate = candidate or shutil.which(name)
     if not candidate:
         raise ValueError(f"{name} not found. Read docs/setup-{('windows' if os.name == 'nt' else 'macos')}.md")
     path = Path(candidate).expanduser().resolve()
@@ -206,10 +216,18 @@ def write_jsx(scene, out):
     data = {"width": scene["intrinsics"]["width"], "height": scene["intrinsics"]["height"],
         "fps": scene["fps_num"]/scene["fps_den"], "frameCount": len(scene["frames"]),
         "zoom": scene["intrinsics"]["fx"], "plates": scene["plates"], "firstPlate": scene["frames"][0]["name"], "poses": ae_poses(scene),
-        "points": cloud_glyphs(scene),
         "origin": [scene["intrinsics"]["cx"], scene["intrinsics"]["cy"], 0],
         "plane": scene["world"].get("plane"), "model": scene.get("model"), "modelScale": scene.get("model_scale", 100)}
-    template = (ROOT/"scripts"/"import_scene.jsx").read_text(encoding="utf-8")
+    glyphs = cloud_glyphs(scene)
+    if scene.get("cloud_renderer", "shapes") == "model":
+        from pointcloud import model_template, write_glb, write_rgb_check
+        data["cloud"] = write_glb(out.parent/"pointcloud.glb",glyphs,data["origin"])
+        scene["cloud_model"] = data["cloud"]
+        template = model_template("import_cloud_model.jsx")
+        write_rgb_check(out.parent)
+    else:
+        data["points"] = glyphs
+        template = (ROOT/"scripts"/"import_scene.jsx").read_text(encoding="utf-8")
     payload = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
     out.write_text(template.replace("/*__SCENE_DATA__*/", payload), encoding="utf-8")
 
@@ -238,9 +256,7 @@ def overlays(scene, out):
     sheet.save(out/"review.jpg", quality=92)
 
 
-def export_scene(args):
-    from PIL import Image
-    solution = load(args.solution); manifest = load(solution["manifest"])
+def validate_solution(solution):
     if solution.get("ready_for_export") is False:
         raise ValueError("Solution was rejected or has unregistered frames; inspect its report before export")
     if solution.get("method") == "temporal_lk":
@@ -251,6 +267,14 @@ def export_scene(args):
             or type(report.get("unused_tracks")) is not int or report["unused_tracks"] < 20
             or not 0 <= values[0] <= 1.5 or not 0 <= values[1] <= 3 or not .95 <= values[2] <= 1):
             raise ValueError("Temporal heldout image attachment failed; export blocked")
+
+
+def export_scene(args):
+    from PIL import Image
+    solution = load(args.solution); manifest = load(solution["manifest"])
+    validate_solution(solution)
+    if args.cloud_renderer == "model" and args.cloud_limit is not None:
+        raise ValueError("Full model display keeps all points; --cloud-limit requires --cloud-renderer shapes")
     cameras, images, points = read_model(solution["text_model"])
     names = [f["name"] for f in manifest["frames"]]
     if names != [f"f{i:06d}.png" for i in range(len(names))]:
@@ -278,12 +302,13 @@ def export_scene(args):
                     (1, 0, -k["shift_x"], 0, 1, -k["shift_y"]),
                     resample=Image.Resampling.BICUBIC, fillcolor="black").save(plates/f["name"])
     ordered = sorted(points.values(),key=lambda p:p["id"])
-    limit = args.cloud_limit
-    cloud = ordered if len(ordered)<=limit else [ordered[round(i*(len(ordered)-1)/(limit-1))] for i in range(limit)]
+    limit = args.cloud_limit or 2000
+    cloud = ordered if args.cloud_renderer == "model" or len(ordered)<=limit else [ordered[round(i*(len(ordered)-1)/(limit-1))] for i in range(limit)]
     scene = {"schema": "aftereffect-colmap.scene.v1", "intrinsics": k,
         "fps_num": manifest["fps_num"], "fps_den": manifest["fps_den"], "frames": frames,
         "points": select_points(points, frames[0], k, args.max_points), "total_points": len(points), "plates": str(plates),
-        "cloud_points": cloud, "point_size_px": args.point_size,
+        "cloud_points": cloud, "cloud_renderer": args.cloud_renderer,
+        "point_size_px": args.point_size if args.point_size is not None else (3 if args.cloud_renderer == "model" else 6),
         "world": {"origin": frames[0]["center"], "basis": [[1,0,0],[0,1,0],[0,0,1]], "scale": args.scale},
         "model": str(args.model.expanduser().resolve()) if args.model else None, "model_scale": args.model_scale,
         "note": "Measured sparse RGB cloud. Marker size is a display choice, not object geometry. No semantic surfaces or metric scale inferred."}
@@ -292,16 +317,32 @@ def export_scene(args):
     if not scene["points"]:
         raise ValueError("No stable visible guide points")
     ae_poses(scene)  # Reject unsupported poses before generating an importer.
-    with (out/"points.ply").open("x",encoding="ascii") as stream:
-        stream.write("ply\nformat ascii 1.0\ncomment COLMAP world coordinates; arbitrary scale\n"
-            +f"element vertex {len(ordered)}\nproperty double x\nproperty double y\nproperty double z\n"
-            +"property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n")
-        for p in ordered:
-            stream.write(" ".join([*(format(v,".17g") for v in p["xyz"]),*(str(v) for v in p["rgb"])])+"\n")
-    save(out/"scene.json", scene); write_jsx(scene, out/"import_scene.jsx"); overlays(scene, out)
+    native_ply = solution.get("cloud_ply")
+    if native_ply:
+        with Path(native_ply).open('rb') as stream:
+            header = []
+            for _ in range(1000):
+                line = stream.readline(65536)
+                if not line: break
+                header.append(line)
+                if line.strip() == b'end_header' or sum(map(len,header))>=65536: break
+            if not header or header[0].strip() != b'ply' or f'element vertex {len(ordered)}'.encode() not in [v.strip() for v in header] or header[-1].strip()!=b'end_header':
+                raise ValueError("Native PLY header/count differs from the model")
+        shutil.copyfile(native_ply,out/"points.ply")
+    else:
+        with (out/"points.ply").open("x",encoding="ascii") as stream:
+            stream.write("ply\nformat ascii 1.0\ncomment COLMAP world coordinates; arbitrary scale\n"
+                +f"element vertex {len(ordered)}\nproperty double x\nproperty double y\nproperty double z\n"
+                +"property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n")
+            for p in ordered:
+                stream.write(" ".join([*(format(v,".17g") for v in p["xyz"]),*(str(v) for v in p["rgb"])])+"\n")
+    scene["source_ply"] = str(out/"points.ply")
+    write_jsx(scene, out/"import_scene.jsx"); save(out/"scene.json", scene)
+    save(out/"review_points.json",scene["points"]); overlays(scene, out)
     save(out/"report.json", {"frames": len(frames), "measured_frames": len(frames), "missing_frames": 0,
         "guide_points": len(scene["points"]), "total_points": len(points), "intrinsics": k,
-        "display_cloud_points": len(cloud), "point_size_px": args.point_size,
+        "display_cloud_points": len(cloud), "point_size_px": scene["point_size_px"],
+        "cloud_renderer": args.cloud_renderer, "full_cloud_display": len(cloud)==len(ordered),
         "median_colmap_point_error_px": statistics.median(p["error"] for p in points.values()),
         "ae_import": "not_run", "visual_attachment": "not_reviewed"})
     print(json.dumps({"export": str(out), "jsx": str(out/"import_scene.jsx"), "review": str(out/"review.jpg"),
@@ -321,7 +362,10 @@ def anchor(args):
         scene["model"] = str(path)
     scene["model_scale"] = args.model_scale
     ae_poses(scene)
-    out = fresh(args.out); save(out/"scene.json", scene); write_jsx(scene, out/"import_scene.jsx"); overlays(scene, out)
+    out = fresh(args.out)
+    if scene.get("source_ply"):
+        shutil.copyfile(scene["source_ply"],out/"points.ply");scene["source_ply"]=str(out/"points.ply")
+    write_jsx(scene, out/"import_scene.jsx"); save(out/"scene.json", scene); overlays(scene, out)
     print(json.dumps({"export": str(out), "plane": args.plane, "point_ids": ids, "scale_is_metric": False}))
 
 
@@ -341,8 +385,9 @@ def parser():
     q = commands.add_parser("export"); q.set_defaults(run=export_scene)
     q.add_argument("--solution", type=Path, required=True); q.add_argument("--out", type=Path, required=True)
     q.add_argument("--max-points", type=int, choices=range(3, 1001), default=80)
-    q.add_argument("--cloud-limit", type=int, choices=range(3, 5001), default=2000)
-    q.add_argument("--point-size", type=float, default=6)
+    q.add_argument("--cloud-renderer", choices=["model","shapes"], default="model", help="model: all RGB points in one AE24.1+ model; shapes: limited legacy precomp")
+    q.add_argument("--cloud-limit", type=int, choices=range(3, 5001), help="explicit shapes-only display cap; default 2000")
+    q.add_argument("--point-size", type=float, help="first-frame display pixels; default model3/shapes6")
     q.add_argument("--scale", type=float, default=500); q.add_argument("--model", type=Path)
     q.add_argument("--model-scale", type=float, default=100)
     q = commands.add_parser("anchor"); q.set_defaults(run=anchor)

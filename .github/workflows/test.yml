@@ -23,8 +23,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m pip install -r requirements.txt
-      - run: python -m pip install -r requirements-tracking.txt
       - name: Prepare official CPU COLMAP and FFmpeg
         shell: pwsh
         run: |
@@ -38,7 +36,16 @@ jobs:
           if (-not $colmapExe) { throw 'COLMAP executable missing' }
           "COLMAP_BINARY=$($colmapExe.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { choco install ffmpeg --yes --no-progress }
-      - run: python -B scripts/colmap_ae.py doctor
+      - run: python -B scripts/setup_environment.py --configure
+      - run: python -B scripts/setup_environment.py --install
+      - name: Verify base venv and persistent machine paths
+        env:
+          COLMAP_BINARY: ''
+        run: .\.venv\Scripts\python.exe -B scripts/colmap_ae.py doctor
+      - run: .\.venv\Scripts\python.exe -B scripts/setup_environment.py --check
+      - run: .\.venv\Scripts\python.exe -B scripts/pointcloud.py --rgb-check --out work/windows-first-rgb
       # CI is a deterministic runner, not an LLM waiting/polling for this process.
-      - run: python -B tests/smoke_colmap.py --out work/windows-smoke
-      - run: python -B tests/smoke_temporal.py --prepared work/windows-smoke/prepared --out work/windows-temporal-smoke
+      - run: .\.venv\Scripts\python.exe -B tests/smoke_colmap.py --out work/windows-smoke
+      - run: python -B scripts/setup_environment.py --install --tracking
+      - run: .\.venv\Scripts\python.exe -B tests/smoke_temporal.py --prepared work/windows-smoke/prepared --out work/windows-temporal-smoke
+      - run: .\.venv\Scripts\python.exe -B tests/smoke_enrich.py --solution work/windows-temporal-smoke/solve/solution.json --out work/windows-enrich-smoke

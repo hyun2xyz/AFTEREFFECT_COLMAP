@@ -1,62 +1,99 @@
 # Windows 준비
 
-Windows 10/11 x64의 CPU 경로부터 시작합니다. NVIDIA GPU가 없어도 첫 수업을
-진행할 수 있습니다. 아래 파일들은 OS에 맞는 실행 프로그램이며 학습 가중치가 아닙니다.
+Windows 10/11 **x64 CPU 경로**를 기준으로 시작합니다. NVIDIA GPU는 첫 COLMAP
+계산의 필수가 아닙니다. [START-HERE](../START-HERE.md)대로 ZIP을 완전히 풀고
+그 폴더를 에이전트와 PowerShell의 작업 폴더로 선택합니다. Git은 필수가 아닙니다.
 
-## 준비 순서
+## 1. Python부터
 
-1. [Git for Windows](https://git-scm.com/downloads/win)와
-   [Python](https://www.python.org/downloads/windows/) 3.12 이상을 준비합니다.
-   첫 과정의 기준은 Python 3.13입니다. 터미널을 다시 열어 `git --version`,
-   `py -3.13 --version`을 확인합니다.
-2. [COLMAP 공식 Releases](https://github.com/colmap/colmap/releases)에서
-   **Windows x64 nocuda** ZIP을 받습니다. 2026-10-25 확인 예시는
-   [4.2.1 nocuda](https://github.com/colmap/colmap/releases/download/4.2.1/colmap-x64-windows-nocuda.zip)입니다.
-   **Source code ZIP이 아닙니다.** 전체를 `C:\Tools\COLMAP` 등에 풀고
-   DLL·plugins 폴더를 함께 보존합니다. NVIDIA CUDA 빌드는 나중에 필요할 때 선택합니다.
-3. [FFmpeg 공식 다운로드 페이지의 Windows 링크](https://ffmpeg.org/download.html#build-windows)에서
-   빌드를 받아 압축을 풀고 `ffmpeg.exe`, `ffprobe.exe`가 든 `bin`을 PATH에
-   추가하거나 아래 환경변수로 정확한 경로를 지정합니다.
-4. [After Effects](https://www.adobe.com/products/aftereffects.html)는 학생의
-   Adobe 라이선스로 별도 설치합니다. 공개 저장소에 앱/SDK/키를 담지 않습니다.
-
-COLMAP 배포본의 `COLMAP.bat -h`로 먼저 설치를 확인해도 됩니다.
-Python 실행기는 셸을 거치지 않으므로 **실제 `colmap.exe` 경로**를 사용합니다.
-설치 경로는 압축을 푼 실제 구조로 바꾸세요.
+지원·테스트 버전은 **3.12 / 3.13**, 첫 설치 권장은 **3.13**입니다.
+이미 있다면 추가 Python 패키지 없이 현재 상태부터 확인합니다.
 
 ```powershell
-$env:COLMAP_BINARY = 'C:\Tools\COLMAP\bin\colmap.exe'
-$env:FFMPEG_BINARY = 'C:\Tools\ffmpeg\bin\ffmpeg.exe'
-$env:FFPROBE_BINARY = 'C:\Tools\ffmpeg\bin\ffprobe.exe'
-git clone https://github.com/hyun2xyz/AFTEREFFECT_COLMAP.git
-cd AFTEREFFECT_COLMAP
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+py -3.13 -B scripts/setup_environment.py --check
+```
+
+빠진 도구가 있으면 종료 코드 `1`과 실제 오류를 출력하며 아무것도 변경하지 않습니다.
+Python이 없다면 [Python 공식 Windows 설치기](https://www.python.org/downloads/windows/)의
+3.13 x64 전체 설치기를 사용합니다. embeddable ZIP이나 source ZIP을 고르지 않습니다.
+WinGet이 있는 컴퓨터는 [Microsoft 설치 명령](https://learn.microsoft.com/en-us/windows/package-manager/winget/install)으로
+패키지/설치 출처를 확인하고 사용자 범위로 설치할 수도 있습니다.
+
+```powershell
+winget show --id Python.Python.3.13 --exact --source winget
+winget install --id Python.Python.3.13 --exact --source winget --scope user --architecture x64
+```
+
+설치 후 새 터미널에서 `py -3.13 --version`을 확인합니다. `py`가 보이지 않으면
+설치한 `python.exe`의 실제 절대 경로로 대신 실행합니다. helper는 Python 자체나
+WinGet·시스템 프로그램을 설치하지 않습니다.
+
+## 2. COLMAP과 FFmpeg
+
+[COLMAP 공식 Releases](https://github.com/colmap/colmap/releases)에서 **Windows x64 nocuda**
+전체 ZIP을 받습니다. 확인한 재현용 버전은
+[4.2.1 nocuda](https://github.com/colmap/colmap/releases/download/4.2.1/colmap-x64-windows-nocuda.zip)입니다.
+[FFmpeg 공식 Windows 링크](https://ffmpeg.org/download.html#build-windows)가 연결하는
+[Gyan release essentials ZIP](https://www.gyan.dev/ffmpeg/builds/)에는 `ffmpeg.exe`와
+`ffprobe.exe`가 함께 있습니다. 앱·DLL·plugins를 따로 떼어 복사하지 않습니다.
+
+새 컴퓨터의 다운로드/압축 해제 예시입니다. 기존 설치 폴더가 있다면 덮어쓰기 전에
+먼저 `--check`로 확인합니다. 아래 다운로드는 저장소 밖의 사용자 로컬 폴더에 둡니다.
+
+```powershell
+$ToolRoot = Join-Path $env:LOCALAPPDATA 'AFTEREFFECT_COLMAP\tools'
+$Downloads = Join-Path $ToolRoot 'downloads'
+New-Item -ItemType Directory -Path $Downloads -Force | Out-Null
+$ColmapZip = Join-Path $Downloads 'colmap-4.2.1-nocuda.zip'
+Invoke-WebRequest 'https://github.com/colmap/colmap/releases/download/4.2.1/colmap-x64-windows-nocuda.zip' -OutFile $ColmapZip
+if ((Get-FileHash $ColmapZip -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c493d88cb4a43f21afba42cb55bf786e5434a0420e73db0ba1454c5d8b3686ae') { throw 'COLMAP SHA256 mismatch' }
+Expand-Archive -Path $ColmapZip -DestinationPath (Join-Path $ToolRoot 'COLMAP')
+$FfmpegZip = Join-Path $Downloads 'ffmpeg-release-essentials.zip'
+Invoke-WebRequest 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' -OutFile $FfmpegZip
+Invoke-WebRequest 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.sha256' -OutFile "$FfmpegZip.sha256"
+$Expected = [regex]::Match((Get-Content "$FfmpegZip.sha256" -Raw), '\b[a-fA-F0-9]{64}\b').Value
+if (-not $Expected -or (Get-FileHash $FfmpegZip -Algorithm SHA256).Hash -ne $Expected) { throw 'FFmpeg SHA256 mismatch' }
+Expand-Archive -Path $FfmpegZip -DestinationPath (Join-Path $ToolRoot 'FFmpeg')
+$ColmapExe = (Get-ChildItem (Join-Path $ToolRoot 'COLMAP') -Filter colmap.exe -Recurse | Select-Object -First 1).FullName
+$FfmpegExe = (Get-ChildItem (Join-Path $ToolRoot 'FFmpeg') -Filter ffmpeg.exe -Recurse | Select-Object -First 1).FullName
+$FfprobeExe = Join-Path (Split-Path $FfmpegExe) 'ffprobe.exe'
+py -3.13 -B scripts/setup_environment.py --configure --colmap $ColmapExe --ffmpeg $FfmpegExe --ffprobe $FfprobeExe
+py -3.13 -B scripts/setup_environment.py --install
+.\.venv\Scripts\python.exe -B scripts/setup_environment.py --check
 .\.venv\Scripts\python.exe -B scripts/colmap_ae.py doctor
 ```
 
-이후 문서의 `python`은 `.\.venv\Scripts\python.exe`입니다. PowerShell
-실행 정책을 바꾸거나 venv activation을 켤 필요가 없습니다.
-위 환경변수는 현재 터미널에만 적용됩니다. 새로 연 에이전트에도 같은 설정을
-전달하거나 `COLMAP_BINARY`/FFmpeg PATH를 그 프로세스에서 설정해야 합니다.
-실행기는 `colmap.exe` 옆의 DLL 경로와 상위 `plugins`를 연결합니다.
-`doctor`가 실패하면 전체 ZIP 구조·버전·로그를 먼저 확인합니다.
-배포본 실행 시 Microsoft C/C++ runtime DLL 오류가 나면
-[Microsoft 공식 Visual C++ Redistributable 안내](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
-에서 x64용 runtime을 확인합니다. 출처를 모르는 DLL 파일을 따로 복사하지 않습니다.
+다운로드 후 버전이나 해시가 달라졌다면 공식 release metadata를 확인하고 멈춥니다.
+`--configure`는 실제로 실행된 파일의 절대 경로만 `tools.local.json`에 저장합니다.
+`COLMAP.bat` 대신 **실제 `colmap.exe`**를 지정합니다. helper는 전체 ZIP의
+DLL/plugins를 사용하며 시스템 PATH나 PowerShell 실행 정책을 변경하지 않습니다.
+이후 실행 시 선택 순서는 **명령 인자 → 환경변수 → tools.local.json → PATH**입니다.
+기존 `COLMAP_BINARY` 등이 오래된 경로를 가리키면 그 값을 먼저 고칩니다.
 
-COLMAP은 별도 모델 가중치가 필요 없습니다. [선택 Laya](laya.md)는 같은
-다국어 가중치를 CPU로 사용하므로 Windows에 MLX를 설치하지 않습니다.
-SIFT가 끊기는 짧은 샷은 [선택형 연속 추적](temporal.md)을 검토하고,
-그때만 `.\.venv\Scripts\python.exe -m pip install -r requirements-tracking.txt`로
-NumPy/OpenCV를 프로젝트 venv에 추가합니다. 가중치는 필요하지 않습니다.
+Microsoft runtime DLL 오류가 나면
+[Microsoft 공식 x64 Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)를
+확인합니다. 출처를 모르는 DLL을 복사하지 않고 `doctor`의 실제 오류를 보존합니다.
 
-## 애펙
+## 3. 프로젝트 패키지와 After Effects
 
-생성된 JSX를 **File → Scripts → Run Script File**로 실행합니다.
-이 한 단계는 Mac과 같습니다. Windows의 `AfterFX.exe -r` 자동 실행은 필요해진
-다음 수업에서 추가할 수 있으며 이 starter는 앱을 강제 실행하거나 저장하지 않습니다.
-GLTF의 외부 BIN/텍스처가 빠졌다면 단일 GLB를 요청하는 것이 편합니다.
+이후 문서의 `python`은 `.\.venv\Scripts\python.exe`입니다. activation은 필요하지 않습니다.
+`--install`은 이 프로젝트의 `.venv`와 `requirements.txt`만 사용합니다.
+[선택 추적](temporal.md)이 필요해진 때만 다음을 실행합니다. 가중치는 필요하지 않습니다.
 
-Windows 전용 코드의 실제 확인 상태는 [검증 기록](validation.md)에 표시합니다.
-Mac에서의 성공을 Windows 애펙 실행 성공으로 해석하지 않습니다.
+```powershell
+.\.venv\Scripts\python.exe -B scripts/setup_environment.py --install --tracking
+```
+
+[Adobe 공식 설치 안내](https://helpx.adobe.com/download-install/using/download-install-new-computer.html)를
+따라 학생 자신의 계정·라이선스로 After Effects를 준비합니다. 로그인·유료 계약·EULA 동의는
+계정 소유자가 직접 처리합니다. 기본 전체 RGB cloud에는 **AE 24.1 이상 / Advanced 3D / GLB**가
+필요합니다. [point-cloud](point-cloud.md)의 작은 RGB/단위 확인을 먼저 하고 생성된
+`check_rgb.jsx` → `import_scene.jsx`를 **File → Scripts → Run Script File**에서 실행합니다.
+영상 없이 `.\.venv\Scripts\python.exe -B scripts/pointcloud.py --rgb-check --out work/rgb-first`로
+첫 검사 파일을 생성할 수 있습니다.
+자동 저장·렌더나 MCP는 필요하지 않습니다.
+
+Windows AE의 네이티브 표시가 이 배포물에서 확인되었다고 취급하지 않습니다.
+해당 컴퓨터에서 색/단위와 첫·중간·끝의 실제 프레임을 검증합니다.
+계산은 [workflow](workflow.md), 긴 계산과 일회성 재개는 [background](background.md),
+실제 확인 범위는 [validation](validation.md)을 따릅니다.

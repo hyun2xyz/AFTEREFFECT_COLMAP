@@ -75,6 +75,9 @@ Anamorphic/non-square fx/fy와 거의 수직인 AE POI 카메라는 이 starter�
 | `scene.json` | 카메라·점·RGB·렌즈·시간·좌표변환; 에이전트가 짧게 요약해 사용 |
 | `report.json` | 등록 수와 내부 오차, AE/시각 검수의 미확인 상태 |
 | `points.ply` | 원래 COLMAP 좌표와 RGB를 가진 **전체** 희소 점 구름 |
+| `pointcloud.glb` | 점 전체를 한 native 3D 모델 레이어로 표시하는 파일 |
+| `review_points.json` | ID를 정확히 고를 때만 읽는 작은 표본; 전체 scene을 LLM에 넣지 않음 |
+| `check_rgb.jsx` / `rgb_check.glb` | 첫 AE 호스트에서 색/좌표 단위 확인 |
 | `plates/` | 애펙 카메라와 정확히 같은 렌즈/크기의 작업용 이미지 |
 | `import_scene.jsx` | 검토 후 실행할 애펙 스크립트 |
 
@@ -83,30 +86,29 @@ Anamorphic/non-square fx/fy와 거의 수직인 AE POI 카메라는 이 starter�
 
 ## 4. 애펙으로 가져오기
 
-**File → Scripts → Run Script File**에서 생성된 JSX를 실행합니다.
+AE24.1+에서 [전체 RGB 점/첫 호스트 검사](point-cloud.md)를 읽고 `check_rgb.jsx`의
+다섯 색 쌍을 먼저 확인합니다. **File → Scripts → Run Script File**에서 결과 폴더의
+`import_scene.jsx`를 실행합니다. 저장소 안의 미생성 템플릿을 고르지 않습니다.
 새 폴더/컴프가 생기며 메인 타임라인은 기본 **4개 레이어**입니다.
 
 1. `COLMAP_CAMERA`: 모든 측정 프레임의 카메라.
-2. `POINT_CLOUD_RGB`: RGB 점들이 들어 있는 3D 프리컴프 하나.
+2. `POINT_CLOUD_RGB`: 모든 원래 RGB 점이 들어 있는 GLB 모델 레이어 하나.
 3. `SOURCE_FOOTAGE`: 처음에는 눈이 꺼져 있습니다. 켜면 영상 위에 점을 겹쳐 봅니다.
 4. `BLACK_BACKGROUND`: 원래 색의 점을 볼 수 있는 불투명 검은 배경.
 
-점 그룹의 **Collapse Transformations**를 켜서 원래3D 위치와 외부 카메라를 유지합니다.
-점 자체를 편집할 때만 그룹을 더블클릭합니다. 메인 타임라인에 점마다 레이어를 만들지 않습니다.
-처음 카메라에서 표식 지름은 기본6px입니다. 거리가 멀어도 점이 사라지지 않도록
-표식의 월드 크기만 바꾸며, 점 중심의 위치·깊이·RGB는 바꾸지 않습니다.
-`--point-size 4`처럼 지름을 조정할 수 있습니다. RGB 값은 보존하지만 프로젝트의
-색 관리·노출에 따른 화면 차이는 별도 확인합니다.
-
-기본 표시 상한은2,000점(`--cloud-limit`)이고 실제 표시 개수를 보고합니다.
-`points.ply`에는 상한과 무관하게 전체 점을 원래 좌표로 보존합니다. 첫/중간/끝의
-ID 검수용 `review.jpg`는 별도의 작은 표본(기본80점)이라 표시 수와 다를 수 있습니다.
+기본은 전체 점을 표시하며 점마다 별도의 레이어를 만들지 않습니다. 표식 지름은
+첫 카메라에서 기본 3px이며 `--point-size 2`처럼 조정합니다. GLB와 PLY의 역할,
+색 관리/조명, 구형 AE의 명시적인 shapes 제한 모드는 [점구름 안내](point-cloud.md)에 있습니다.
+첫/중간/끝 ID 검수용 `review.jpg`는 작은 표본(기본 80점)이라 표시 수와 다릅니다.
+더 실제 점이 필요할 때만 같은 안내의 `enrich_cloud.py`를 백그라운드로 실행합니다.
 이전 프로젝트는 저장/종료하지 않습니다. `WORLD_ORIGIN`은 바닥/벽이나 제공 모델이
 있는 다음 단계에서만 추가됩니다. 고밀도 표면이나 실제 치수가 자동 생성되지는 않습니다.
 
 선택 native 검수는 `tests/generate_ae_check.py --scene ... --out ...`로 JSX를
-만들어 실행합니다. 점 그룹과 실제 카메라의 좌표를 확인하고 결과를 표시하며,
+만들어 실행합니다. GLB의 실제 인코딩 중심과 카메라의 좌표를 확인하고 결과를 표시하며,
 메인 컴프에 검수용 텍스트 레이어를 남기지 않습니다.
+앱 제어 도구가 없는 Codex/Claude Code에서는 학생이 이 메뉴 실행을 맡습니다.
+그 결과를 보기 전에는 Python 검증과 실제 AE 확인을 구분해 기록합니다.
 
 모든 소스 프레임에 측정한 카메라 키를 넣고 HOLD로 설정합니다.
 서브프레임 모션블러나 슬로모션에 필요한 연속 카메라 추정은 다음 단계입니다.

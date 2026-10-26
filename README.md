@@ -6,9 +6,10 @@ macOS·Windows에서 Python이 계산을 준비하고 애펙용 JSX를 만듭니
 
 ## 학생은 이렇게 시작합니다
 
-Codex 또는 Claude Code에 이 저장소를 열고 다음처럼 요청하세요.
+[START-HERE.md](START-HERE.md)부터 시작합니다. Git 없이 받은 소스 ZIP도 됩니다.
+Codex 또는 Claude Code에서 압축을 푼 **저장소 폴더**를 열고 다음처럼 요청하세요.
 
-> AGENTS.md와 공유 스킬을 읽고 제 컴퓨터부터 확인해 주세요.
+> START-HERE.md, AGENTS.md와 공유 스킬을 읽고 제 컴퓨터부터 확인해 주세요.
 > 필요한 것만 설치 안내하고, 제가 주는 짧은 영상으로 COLMAP 카메라와
 > RGB 점 구름을 애펙에 가져오는 과정을 한 단계씩 진행해 주세요.
 > 계산은 백그라운드에서 실행하고, 지원되는 일회성 예약으로 이 채팅을
@@ -17,6 +18,7 @@ Codex 또는 Claude Code에 이 저장소를 열고 다음처럼 요청하세요
 - [아무것도 없는 Mac 준비](docs/setup-macos.md)
 - [아무것도 없는 Windows 준비](docs/setup-windows.md)
 - [첫 영상부터 애펙까지](docs/workflow.md)
+- [COLMAP 전체 RGB 점·한 레이어 표시·실제 점 추가](docs/point-cloud.md)
 - [SIFT가 끊기는 짧은 샷: 선택형 연속 측정 추적](docs/temporal.md)
 - [백그라운드 계산·한 번만 재개·예약 정리](docs/background.md)
 - [선택: Laya로 작은 판단 줄이기](docs/laya.md)
@@ -32,8 +34,10 @@ Codex 또는 Claude Code에 이 저장소를 열고 다음처럼 요청하세요
 COLMAP·FFmpeg·After Effects는 각 공식 경로에서 별도로 준비합니다.
 Laya 가중치는 선택 사항이며 Git에 포함하지 않습니다.
 
-점은 원래3D 위치와 RGB를 유지하고, 화면에서 볼 수 있는 크기의 표식으로 표시합니다.
-기본 표시 상한은2,000점이며 그보다 많은 원본 점도 `points.ply`에는 전부 보존합니다.
+점은 원래 3D 중심과 RGB를 유지하며 **전체 점**을 GLB 모델 레이어 하나로 표시합니다.
+기본 크기는 첫 카메라에서 3px입니다. 전체 원본 좌표/RGB는 `points.ply`에도 보존합니다.
+AE24.1+의 Advanced3D가 필요하며 첫 호스트에서 `check_rgb.jsx`로 색과 단위를 확인합니다.
+구형 AE용 `--cloud-renderer shapes`는 명시적인 제한 표시 옵션입니다.
 원본 영상 레이어는 처음에 꺼져 있습니다. 눈 아이콘을 켜면 영상과 겹쳐 볼 수 있습니다.
 지금은 희소 점 구름입니다. 고밀도 복원, 자동 바닥 인식, 사람 가림,
 그림자·조명 매칭, 자동 렌더는 다음 수업에서 필요할 때 확장합니다.
@@ -46,18 +50,34 @@ Laya 가중치는 선택 사항이며 Git에 포함하지 않습니다.
 Codex는 저장소 스킬을 사용하고, Claude Code는 `CLAUDE.md`에서 같은 지침을 읽습니다.
 전역 설정이나 개인 스킬을 바꾸는 설치기는 없습니다. 새로 연 세션에서 확인하세요.
 
+아래는 **OS 준비와 setup helper의 프로젝트 venv 설치가 끝난 뒤** 실행합니다.
+
+macOS:
+
 ```sh
-python -m pip install -r requirements.txt
-python -B scripts/colmap_ae.py doctor
-python -B -m unittest discover -s tests -v
+.venv/bin/python -B scripts/colmap_ae.py doctor
+.venv/bin/python -B -m unittest discover -s tests -v
 ```
 
-여기서 `python`은 프로젝트 venv의 Python입니다. 기본 명령은
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -B scripts/colmap_ae.py doctor
+.\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
+```
+
+다른 문서의 `python`도 이 프로젝트 venv 실행 파일을 뜻합니다. 기본 명령은
 `doctor`, `prepare`, `solve`, `export`, `anchor` 다섯 개뿐입니다.
 긴 계산은 `scripts/jobs.py`로 실행합니다.
 SIFT 실패 시에만 `requirements-tracking.txt`와 `scripts/temporal_solve.py`를
 선택합니다. 검토한 정적 영역·초점거리 가정을 받고, 계산에 쓰지 않은 약20%의
 관측점을 검사해 실패하면 내보내기를 막습니다. 특정 샷의 렌즈·마스크를 기본값으로 넣지 않습니다.
+점이 더 필요할 때만 `enrich_cloud.py`로 검증된 카메라를 고정하고 실제 COLMAP 점을
+추가합니다. 새 SIFT가 기본이며, 기존 DB 재사용은 모든 입력 픽셀이 같은 경우만 허용합니다.
+
+설치 경로는 `scripts/setup_environment.py --configure`가 개인 `tools.local.json`에
+기록합니다. 패키지는 실행 파일·venv·개인 설정을 포함하지 않습니다. Adobe 설치와
+라이선스/약관 단계는 학생이 공식 앱에서 진행하며, 에이전트가 완료 여부를 확인합니다.
 
 [검증 범위](docs/validation.md)와 [출처·라이선스](THIRD_PARTY_NOTICES.md)를 확인하세요.
 실행 파일·Adobe 앱·가중치·학생 영상·AEP는 재배포하지 않습니다.

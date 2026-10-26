@@ -6,6 +6,7 @@ the measured coordinates; the expected coordinates are projected in Python.
 import argparse
 import json
 from pathlib import Path
+import struct
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
@@ -18,19 +19,28 @@ def main():
     a=p.parse_args()
     if a.out.exists():raise FileExistsError(a.out)
     scene=json.loads(a.scene.read_text(encoding="utf-8"));samples=[]
-    points=scene.get("cloud_points",scene["points"])
-    if len(points)>80:points=[points[round(i*(len(points)-1)/79)] for i in range(80)]
+    all_points=scene.get("cloud_points",scene["points"])
+    selected=list(range(len(all_points)))
+    if len(selected)>80:selected=[round(i*(len(selected)-1)/79) for i in range(80)]
+    points=[all_points[i] for i in selected]
+    model_cloud=scene.get('cloud_renderer')=='model';locals_by_id={}
+    if model_cloud:
+        raw=(a.scene.parent/scene['cloud_model']['file']).read_bytes();size=struct.unpack_from('<I',raw,12)[0]
+        doc=json.loads(raw[20:20+size]);offset=20+size+8+doc['bufferViews'][0]['byteOffset']
+        for i in selected:
+            xyz=struct.unpack_from('<18f',raw,offset+i*72)
+            locals_by_id[all_points[i]['id']]=[sum(xyz[j::3])/6*scene['cloud_model']['units']*s for j,s in enumerate([1,-1,-1])]
     indices=sorted({0,len(scene["frames"])//2,len(scene["frames"])-1})
     for index in indices:
         frame=scene["frames"][index]
         for point in points:
             expected=project(frame,point["xyz"],scene["intrinsics"])
-            if expected is not None:samples.append({"id":point["id"],"time":index*scene["fps_den"]/scene["fps_num"],"expected":expected})
+            if expected is not None:samples.append({"id":point["id"],"time":index*scene["fps_den"]/scene["fps_num"],"expected":expected,"local":locals_by_id.get(point['id'])})
     data=json.dumps(samples,separators=(",",":"),allow_nan=False)
     jsx='''(function(){
 var comp=app.project.activeItem;
 if(!(comp instanceof CompItem) || !comp.layer("COLMAP_CAMERA"))throw new Error("Select matching COLMAP comp first");
-var samples=__SAMPLES__, errors=[],probe=null,version=app.version,problem=null,createdSource=null,before={};
+var samples=__SAMPLES__,modelCloud=__MODEL_CLOUD__,errors=[],probe=null,version=app.version,problem=null,createdSource=null,before={};
 for(var j=1;j<=app.project.numItems;j++)before[app.project.item(j).id]=true;
 app.beginUndoGroup("Verify COLMAP camera projection");
 try {
@@ -40,7 +50,9 @@ try {
   for(var i=0;i<samples.length;i++){
     var s=samples[i],cloud=null;
     try{cloud=comp.layer("POINT_CLOUD_RGB");}catch(ignore){}
-    if(cloud){
+    if(cloud&&modelCloud){
+      pos.expression='var pc=thisComp.layer("POINT_CLOUD_RGB");var f=100/pc.transform.scale[0];var p=['+s.local.join(',')+'];var v=pc.toComp([p[0]*f,p[1]*f,p[2]*f]);[v[0],v[1]];';
+    }else if(cloud){
       if(!cloud.collapseTransformation)throw new Error("Cloud must preserve collapsed3D transformations");
       pos.expression='var pc=thisComp.layer("POINT_CLOUD_RGB");var v=pc.toComp(pc.source.layer("P_'+s.id+'").transform.position);[v[0],v[1]];';
     }else{
@@ -59,7 +71,7 @@ var result="COLMAP_QA_"+(passed?"PASS":"FAIL")+" | AE "+version+" | n="+errors.l
 if(problem)result+=" | "+problem;
 comp.comment=result+"\\n"+comp.comment;comp.openInViewer();alert(result);
 })();
-'''.replace("__SAMPLES__",data)
+'''.replace("__SAMPLES__",data).replace('__MODEL_CLOUD__','true' if model_cloud else 'false')
     a.out.write_text(jsx,encoding="utf-8")
     print(json.dumps({"jsx":str(a.out.resolve()),"samples":len(samples),"native_ae":"not_run"}))
 
