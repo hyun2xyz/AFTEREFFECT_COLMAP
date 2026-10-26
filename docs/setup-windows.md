@@ -1,8 +1,8 @@
 # Windows 준비
 
 Windows 10/11 **x64 CPU 경로**를 기준으로 시작합니다. NVIDIA GPU는 첫 COLMAP
-계산의 필수가 아닙니다. [START-HERE](../START-HERE.md)대로 ZIP을 완전히 풀고
-그 폴더를 에이전트와 PowerShell의 작업 폴더로 선택합니다. Git은 필수가 아닙니다.
+계산의 필수가 아닙니다. [START-HERE](../START-HERE.md)대로 포크해서 받은
+저장소 폴더를 에이전트와 PowerShell의 작업 폴더로 선택합니다.
 
 ## 1. Python부터
 

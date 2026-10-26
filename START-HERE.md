@@ -3,12 +3,15 @@
 이 폴더는 **Codex 또는 Claude Code와 함께** 내 영상의 COLMAP 카메라와 원본 RGB
 포인트 클라우드를 After Effects로 가져오는 수업용 starter입니다. Python·COLMAP·
 FFmpeg가 없는 컴퓨터도 설치 단계부터 시작할 수 있습니다. After Effects는 Adobe
-라이선스로 별도 준비하며 앱·모델 가중치는 이 ZIP에 포함하지 않습니다.
+라이선스로 별도 준비하며 앱·모델 가중치는 이 저장소에 포함하지 않습니다.
+
+## 포크해서 받기
+
+공통강의의 Git 세팅(Git·GitHub CLI 설치와 `gh` 인증)을 마친 컴퓨터에서 시작합니다.
+[포크로 시작하고 업데이트 받기](docs/fork-and-update.md) 1번의 문장으로 이 저장소를 내 GitHub
+계정에 포크해서 받고, 받은 폴더를 Codex에서 다시 엽니다. 전역 스킬 설치는 필요하지 않습니다.
 
 ## 폴더를 연 뒤 이 문장을 붙여 넣기
-
-ZIP을 완전히 압축 해제하고 `AGENTS.md`, `scripts`, `docs`, `.agents`가 있는
-폴더를 에이전트의 작업 폴더로 선택합니다. Git이나 전역 스킬 설치는 필요하지 않습니다.
 
 > 이 폴더의 AGENTS.md와 .agents/skills/aftereffect-colmap/SKILL.md를 읽고 시작해 주세요.
 > 실제 OS와 설치된 도구를 확인하고, OS setup 문서의 공식 출처로 빠진 것만 준비해 주세요.
@@ -36,3 +39,6 @@ ZIP을 완전히 압축 해제하고 `AGENTS.md`, `scripts`, `docs`, `.agents`�
 기본 과정에는 학습 가중치나 외부 영상 업로드가 필요하지 않습니다. 추가 점 복원이나
 선택 추적은 현재 샷에서 필요할 때만 읽습니다. 재구성되지 않은 표면의 깊이·실제 치수는
 추정하지 않으며, 컴퓨터별 실제 검증 범위는 [validation](docs/validation.md)에 구분합니다.
+
+수업을 마치면 내 작업을 내 포크에 push하고, 강사가 업데이트를 알리면 upstream에서 pull합니다.
+방법은 [포크로 시작하고 업데이트 받기](docs/fork-and-update.md)의 2·3번에 있습니다.
