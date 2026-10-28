@@ -27,7 +27,7 @@ class TemporalTests(unittest.TestCase):
         data = {"width": 90, "height": 60,
                 "polygons": [[[4, 30], [20, 30], [20, 50], [4, 50]]],
                 "exclude_polygons": [[[8, 35], [12, 35], [12, 45], [8, 45]]]}
-        path.write_text(json.dumps(data))
+        path.write_text(json.dumps(data), encoding="utf-8")
         mask = temporal.read_mask(path, 90, 60)
         self.assertEqual(mask[40, 5], 255)
         self.assertEqual(mask[10, 40], 0)
@@ -35,7 +35,7 @@ class TemporalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "never auto-scale"):
             temporal.read_mask(path, 180, 120)
         data["polygons"][0][0] = [90, 20]
-        path.write_text(json.dumps(data))
+        path.write_text(json.dumps(data), encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "inside prepared pixels"):
             temporal.read_mask(path, 90, 60)
 
@@ -62,7 +62,7 @@ class TemporalTests(unittest.TestCase):
                     "frames": [{"frame": i, "name": name, "time_seconds": time}
                                for i, (name, time) in enumerate(zip(names, ["0", "1/24", "1/12"]))]}
         path = self.root/"manifest.json"
-        path.write_text(json.dumps(manifest))
+        path.write_text(json.dumps(manifest), encoding="utf-8")
         self.assertEqual(temporal.prepared(path)[1], names)
         (self.root/names[1]).unlink()
         with self.assertRaisesRegex(ValueError, "no frame may be skipped"):
@@ -80,13 +80,13 @@ class TemporalTests(unittest.TestCase):
         self.assertTrue(np.array_equal(heldout, tracks[:, heldout_ids]))
         names = [f"f{i:06d}.png" for i in range(7)]
         temporal.feature_files(self.root/"features", names, train)
-        lines = (self.root/"features"/(names[0]+".txt")).read_text().splitlines()
+        lines = (self.root/"features"/(names[0]+".txt")).read_text(encoding="utf-8").splitlines()
         imported_x = {float(line.split()[0]) for line in lines[1:]}
         self.assertEqual(imported_x, set(train[0, :, 0]))
         self.assertFalse(imported_x & set(heldout[0, :, 0]))
         self.assertTrue(all(len(line.split()) == 132 for line in lines[1:]))
         temporal.raw_matches(self.root/"raw.txt", names, 100)
-        raw = (self.root/"raw.txt").read_text()
+        raw = (self.root/"raw.txt").read_text(encoding="utf-8")
         self.assertIn(names[0]+" "+names[-1]+"\n", raw)
         indices = [tuple(map(int, line.split())) for line in raw.splitlines() if line and not line.startswith("f")]
         self.assertTrue(all(a == b and 0 <= a < 100 for a, b in indices))

@@ -83,7 +83,7 @@ def main():
                  ["solve","--input",str(out/"prepared"),"--out",str(out/"solve"),"--threads","2"],
                  ["export","--solution",str(out/"solve"/"solution.json"),"--out",str(out/"export")]):
         subprocess.run(cli+args,check=True)
-    report=json.loads((out/"export"/"report.json").read_text())
+    report=json.loads((out/"export"/"report.json").read_text(encoding="utf-8"))
     assert report["frames"]==12 and report["missing_frames"]==0,report
     assert (out/"export"/"import_scene.jsx").is_file()
     print(json.dumps({"real_colmap_smoke":"passed","frames":12,"elapsed_seconds":round(time.monotonic()-started,2),

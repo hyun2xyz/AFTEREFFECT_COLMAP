@@ -50,13 +50,13 @@ class FullExportTests(unittest.TestCase):
 
     def test_default_exports_entire_cloud_and_original_native_ply(self):
         points=self.root/'text/points3D.txt'
-        with points.open('a') as f:
+        with points.open('a', encoding='utf-8') as f:
             for i in range(4,2205):f.write(f'{i} .3 .2 6 12 34 56 .1 1 0 2 0 3 0\n')
         native=self.root/'native.ply';native.write_bytes(b'ply\nformat ascii 1.0\ncomment keep native metadata\nelement vertex 2204\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n'+b'0 0 5 12 34 56\n'*2204)
-        source=self.root/'solution.json';s=json.loads(source.read_text());s['cloud_ply']=str(native);source.write_text(json.dumps(s))
+        source=self.root/'solution.json';s=json.loads(source.read_text(encoding='utf-8'));s['cloud_ply']=str(native);source.write_text(json.dumps(s), encoding='utf-8')
         out=self.root/'full';r=self.cli('export','--solution',source,'--out',out)
         self.assertEqual(r.returncode,0,r.stderr)
-        scene=json.loads((out/'scene.json').read_text());report=json.loads((out/'report.json').read_text())
+        scene=json.loads((out/'scene.json').read_text(encoding='utf-8'));report=json.loads((out/'report.json').read_text(encoding='utf-8'))
         self.assertEqual(scene['cloud_renderer'],'model');self.assertEqual(len(scene['cloud_points']),2204)
         self.assertEqual(scene['cloud_model']['points'],2204);self.assertTrue(report['full_cloud_display'])
         self.assertEqual(native.read_bytes(),(out/'points.ply').read_bytes())
@@ -64,7 +64,7 @@ class FullExportTests(unittest.TestCase):
 
     def test_truncated_native_ply_is_rejected_without_hanging(self):
         native=self.root/'bad.ply'
-        source=self.root/'solution.json';s=json.loads(source.read_text());s['cloud_ply']=str(native);source.write_text(json.dumps(s))
+        source=self.root/'solution.json';s=json.loads(source.read_text(encoding='utf-8'));s['cloud_ply']=str(native);source.write_text(json.dumps(s), encoding='utf-8')
         for i,content in enumerate([b'',b'ply\nformat ascii 1.0\n']):
             native.write_bytes(content)
             r=self.cli('export','--solution',source,'--out',self.root/f'bad{i}')

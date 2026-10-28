@@ -31,7 +31,7 @@ class EnrichTests(unittest.TestCase):
     def test_seed_maps_native_database_image_ids_and_does_not_copy_old_points(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);source=root/'source';source.mkdir();db=root/'db'
-            (source/'images.txt').write_text('1 1 0 0 0 0 0 0 1 f000000.png\n4 5 9\n2 1 0 0 0 -.1 0 0 1 f000001.png\n4 5 9\n')
+            (source/'images.txt').write_text('1 1 0 0 0 0 0 0 1 f000000.png\n4 5 9\n2 1 0 0 0 -.1 0 0 1 f000001.png\n4 5 9\n', encoding='utf-8')
             with closing(sqlite3.connect(db)) as con:
                 con.execute('CREATE TABLE cameras(camera_id INTEGER,model INTEGER,width INTEGER,height INTEGER,params BLOB)')
                 con.execute('INSERT INTO cameras VALUES(4,2,50,40,?)',(struct.pack('<4d',60,25,20,0),))
@@ -39,10 +39,10 @@ class EnrichTests(unittest.TestCase):
                 con.executemany('INSERT INTO images VALUES(?,?,4)',[(41,'f000000.png'),(52,'f000001.png')])
                 con.commit()
             seed_model(source,root/'seed',db,['f000000.png','f000001.png'],{'model':'SIMPLE_PINHOLE','width':50,'height':40,'params':[60,25,20]})
-            lines=(root/'seed/images.txt').read_text().splitlines()
+            lines=(root/'seed/images.txt').read_text(encoding='utf-8').splitlines()
             self.assertEqual(lines[0].split()[0],'41');self.assertEqual(lines[2].split()[0],'52')
             self.assertEqual(lines[0].split()[8],'4');self.assertEqual(lines[1],'')
-            self.assertEqual((root/'seed/points3D.txt').read_text(),'')
+            self.assertEqual((root/'seed/points3D.txt').read_text(encoding='utf-8'),'')
 
 
 if __name__=='__main__':unittest.main()

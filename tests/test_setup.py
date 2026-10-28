@@ -19,8 +19,8 @@ class SetupTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="setup class 한글 ")
         self.root = Path(self.temp.name)
-        (self.root/"requirements.txt").write_text("Pillow>=11,<13\n")
-        (self.root/"requirements-tracking.txt").write_text("numpy>=2,<3\n")
+        (self.root/"requirements.txt").write_text("Pillow>=11,<13\n", encoding="utf-8")
+        (self.root/"requirements-tracking.txt").write_text("numpy>=2,<3\n", encoding="utf-8")
 
     def tearDown(self):
         self.temp.cleanup()
@@ -44,7 +44,7 @@ class SetupTests(unittest.TestCase):
         path = setup.venv_python(self.root)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"fixture; never executed")
-        (self.root/".venv/pyvenv.cfg").write_text("home = fixture\n")
+        (self.root/".venv/pyvenv.cfg").write_text("home = fixture\n", encoding="utf-8")
 
     def test_helper_loads_without_site_packages(self):
         result = subprocess.run([sys.executable, "-S", "-B", str(ROOT/"scripts/setup_environment.py"), "--help"],
@@ -96,7 +96,7 @@ class SetupTests(unittest.TestCase):
 
     def test_rejects_batch_wrappers_and_reports_version_failure(self):
         wrapper = self.root/"COLMAP.bat"
-        wrapper.write_text("fixture")
+        wrapper.write_text("fixture", encoding="utf-8")
         with patch.object(setup.subprocess, "run") as run:
             self.assertIn("wrapper", setup.probe_tool("colmap", wrapper)["error"])
             run.assert_not_called()

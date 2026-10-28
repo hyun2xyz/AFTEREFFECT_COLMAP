@@ -93,9 +93,9 @@ class GeometryTests(unittest.TestCase):
     def test_text_reader_empty_observations_and_names_with_spaces(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)
-            (p/"cameras.txt").write_text("# CAMERAS\n1 PINHOLE 640 480 500 500 320 240\n")
-            (p/"images.txt").write_text("# IMAGES\n1 1 0 0 0 0 0 0 1 image with spaces.png\n\n2 1 0 0 0 -1 0 0 1 next.png\n0 0 5\n")
-            (p/"points3D.txt").write_text("5 0 0 5 255 64 0 .1 1 0 2 0\n")
+            (p/"cameras.txt").write_text("# CAMERAS\n1 PINHOLE 640 480 500 500 320 240\n", encoding="utf-8")
+            (p/"images.txt").write_text("# IMAGES\n1 1 0 0 0 0 0 0 1 image with spaces.png\n\n2 1 0 0 0 -1 0 0 1 next.png\n0 0 5\n", encoding="utf-8")
+            (p/"points3D.txt").write_text("5 0 0 5 255 64 0 .1 1 0 2 0\n", encoding="utf-8")
             cams,images,points=read_model(p)
             self.assertEqual(images["next.png"]["center"],[1,0,0]);self.assertEqual(points[5]["rgb"],[255,64,0])
             self.assertIn("image with spaces.png",images)
@@ -109,7 +109,7 @@ class GeometryTests(unittest.TestCase):
             s=fixture();s["frames"][0]["time_seconds"]="1/30"
             with self.assertRaises(ValueError):write_jsx(s,out)
             write_jsx(fixture(),out)
-            text=out.read_text()
+            text=out.read_text(encoding="utf-8")
             self.assertNotIn("/*__SCENE_DATA__*/",text)
             self.assertIn("KeyframeInterpolationType.HOLD",text)
             self.assertNotIn("app.project.save(",text)

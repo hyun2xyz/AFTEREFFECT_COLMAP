@@ -43,7 +43,7 @@ def process_alive(pid):
     # A reparented zombie on a Linux CI runner cannot execute any more code.
     stat = Path(f"/proc/{pid}/stat")
     try:
-        if stat.exists() and stat.read_text().rsplit(")", 1)[1].split()[0] == "Z":
+        if stat.exists() and stat.read_text(encoding="utf-8").rsplit(")", 1)[1].split()[0] == "Z":
             return False
     except FileNotFoundError:
         return False
@@ -113,7 +113,7 @@ class JobsTests(unittest.TestCase):
         self.assertGreaterEqual(status["elapsed_seconds"], 0)
         self.assertNotIn("log_tail", status)
         self.assertLess(len(json.dumps(status)), 4000)
-        self.assertEqual(Path(status["logs"]["stderr"]).read_text(), "warning\n")
+        self.assertEqual(Path(status["logs"]["stderr"]).read_text(encoding="utf-8"), "warning\n")
         tail, _ = self.status(job, "--tail", 1)
         self.assertLessEqual(len(tail["log_tail"]["stdout"].encode()), 32 * 1024)
         self.assertEqual(tail["log_tail"]["stderr"], "warning")
@@ -124,7 +124,7 @@ class JobsTests(unittest.TestCase):
         self.start(job, "import sys; print('before failure'); sys.exit(7)")
         status, returncode = self.wait_terminal(job)
         self.assertEqual((status["state"], status["exit_code"], returncode), ("failed", 7, 1))
-        self.assertIn("before failure", Path(status["logs"]["stdout"]).read_text())
+        self.assertIn("before failure", Path(status["logs"]["stdout"]).read_text(encoding="utf-8"))
 
     def test_detached_command_survives_foreground_cli_exit(self):
         job = self.root / "detached"
@@ -146,10 +146,10 @@ class JobsTests(unittest.TestCase):
         record, _ = self.status(job)
         self.assertIn(record["state"], {"starting", "running"})
         # This point is reached only after the foreground CLI has exited.
-        gate.write_text("released")
+        gate.write_text("released", encoding="utf-8")
         status, _ = self.wait_terminal(job)
         self.assertEqual(status["state"], "succeeded")
-        self.assertEqual(marker.read_text(), "alive")
+        self.assertEqual(marker.read_text(encoding="utf-8"), "alive")
 
     def test_duplicate_start_and_completed_directory_reuse_are_rejected(self):
         job = self.root / "one use"
@@ -252,7 +252,7 @@ class JobsTests(unittest.TestCase):
             status, returncode = self.wait_terminal(job)
             self.assertEqual((status["state"], returncode), ("timeout", 1))
             self.assertTrue(pid_file.exists(), "grandchild did not start before timeout")
-            grandchild_pid = int(pid_file.read_text())
+            grandchild_pid = int(pid_file.read_text(encoding="utf-8"))
             deadline = time.monotonic() + 3
             while process_alive(grandchild_pid) and time.monotonic() < deadline:
                 time.sleep(0.03)
@@ -332,18 +332,18 @@ class JobsTests(unittest.TestCase):
             marker,
         )
         self.wait_terminal(job)
-        record = json.loads((job / "status.json").read_text())
+        record = json.loads((job / "status.json").read_text(encoding="utf-8"))
         record.update(state="running", finished_at=None, exit_code=None, heartbeat_at="2000-01-01T00:00:00Z")
-        (job / "status.json").write_text(json.dumps(record))
+        (job / "status.json").write_text(json.dumps(record), encoding="utf-8")
         stale, returncode = self.status(job)
         self.assertEqual((stale["state"], stale["heartbeat_recent"], returncode), ("stale", False, 1))
         self.cli("_worker", "--job", job, expected=1)
-        self.assertEqual(marker.read_text(), "x")
-        (job / "status.json").write_text("{")
+        self.assertEqual(marker.read_text(encoding="utf-8"), "x")
+        (job / "status.json").write_text("{", encoding="utf-8")
         corrupt, returncode = self.status(job)
         self.assertEqual((corrupt["state"], returncode), ("invalid", 1))
         record.update(heartbeat_at=None)
-        (job / "status.json").write_text(json.dumps(record))
+        (job / "status.json").write_text(json.dumps(record), encoding="utf-8")
         corrupt, returncode = self.status(job)
         self.assertEqual((corrupt["state"], returncode), ("invalid", 1))
 
