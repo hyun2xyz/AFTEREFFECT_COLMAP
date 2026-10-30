@@ -141,7 +141,7 @@ print(json.dumps(dict(version=list(sys.version_info[:3]),prefix=sys.prefix,base_
             raise ValueError("Interpreter does not belong to this project's .venv")
         supported = tuple(data["version"][:2]) in SUPPORTED_PYTHON
         pillow = data["packages"]["Pillow"]
-        pillow_ready = bool(pillow and 11 <= int(pillow.split(".")[0]) < 13)
+        pillow_ready = bool(pillow and 13 <= int(pillow.split(".")[0]) < 14)
         return {**state, **data, "supported_python": supported, "ready": supported and pillow_ready}
     except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError) as exc:
         return {**state, "error": str(exc)}

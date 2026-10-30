@@ -19,7 +19,7 @@ class SetupTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="setup class 한글 ")
         self.root = Path(self.temp.name)
-        (self.root/"requirements.txt").write_text("Pillow>=11,<13\n", encoding="utf-8")
+        (self.root/"requirements.txt").write_text("Pillow>=13,<14\n", encoding="utf-8")
         (self.root/"requirements-tracking.txt").write_text("numpy>=2,<3\n", encoding="utf-8")
 
     def tearDown(self):
@@ -38,7 +38,7 @@ class SetupTests(unittest.TestCase):
     def state(self, *, ready=False):
         return {"exists": True, "version": [3, 13, 7], "supported_python": True, "ready": ready,
                 "prefix": str(self.root/".venv"), "base_prefix": str(self.root/"base-python"),
-                "packages": {"Pillow": "11.3.0" if ready else None, "numpy": None, "opencv-python-headless": None}}
+                "packages": {"Pillow": "13.0.0" if ready else None, "numpy": None, "opencv-python-headless": None}}
 
     def make_venv(self):
         path = setup.venv_python(self.root)
