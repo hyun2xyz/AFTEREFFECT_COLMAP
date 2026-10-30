@@ -73,6 +73,8 @@ git push origin main
   내 작업이 지워집니다. Sync fork 버튼은 내 포크에 새 커밋이 없을 때만 씁니다.
 - `upstream`이 없다고 나오면 한 번 등록합니다:
   `git remote add upstream https://github.com/hyun2xyz/AFTEREFFECT_COLMAP.git`
+- push가 `workflow` 권한(scope)이 없다며 거절되면 강사 업데이트에 `.github/workflows` 변경이 들어 있는 경우입니다.
+  `gh auth refresh -h github.com -s workflow`로 권한을 한 번 추가한 뒤 다시 push합니다.
 
 ## 4. Git 세팅 전이라면
 
